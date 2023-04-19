@@ -19,9 +19,17 @@ import 'package:test/test.dart';
 /// Call [verifyCalls] to verify that each desired call occurred.
 class FakeProcessManager extends Mock implements ProcessManager {
   FakeProcessManager(
-      {StringReceivedCallback? stdinResults, this.isPeriodic = false}) {
+      {StringReceivedCallback? stdinResults,
+      this.isPeriodic = false,
+      this.customResult,
+      this.customResultSync,
+      this.customProcess}) {
     if (stdinResults != null) stdinResults = stdinResults;
   }
+
+  final Future<ProcessResult> Function()? customResult;
+  final ProcessResult Function()? customResultSync;
+  final Future<Process> Function()? customProcess;
 
   final bool isPeriodic;
 
