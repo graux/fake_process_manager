@@ -18,15 +18,18 @@ import 'package:test/test.dart';
 ///
 /// Call [verifyCalls] to verify that each desired call occurred.
 class FakeProcessManager extends Mock implements ProcessManager {
-  FakeProcessManager(
-      {StringReceivedCallback? stdinResults,
-      this.isPeriodic = false,
-      this.customResult,
-      this.customResultSync,
-      this.customProcess}) {
+  FakeProcessManager({
+    StringReceivedCallback? stdinResults,
+    this.isPeriodic = false,
+    this.customStart,
+    this.customResult,
+    this.customResultSync,
+    this.customProcess,
+  }) {
     if (stdinResults != null) stdinResults = stdinResults;
   }
 
+  final Future<Process> Function()? customStart;
   final Future<ProcessResult> Function()? customResult;
   final ProcessResult Function()? customResultSync;
   final Future<Process> Function()? customProcess;
@@ -122,6 +125,7 @@ class FakeProcessManager extends Mock implements ProcessManager {
           bool runInShell = false,
           covariant Encoding? stdoutEncoding = systemEncoding,
           covariant Encoding? stderrEncoding = systemEncoding}) =>
+      customResult?.call() ??
       _nextResult(Invocation.method(Symbol("run"), [command]));
 
   @override
@@ -132,6 +136,7 @@ class FakeProcessManager extends Mock implements ProcessManager {
           bool runInShell = false,
           covariant Encoding? stdoutEncoding = systemEncoding,
           covariant Encoding? stderrEncoding = systemEncoding}) =>
+      customResultSync?.call() ??
       _nextResultSync(Invocation.method(Symbol("runSync"), [command]));
 
   @override
@@ -141,6 +146,7 @@ class FakeProcessManager extends Mock implements ProcessManager {
           bool includeParentEnvironment = true,
           bool runInShell = false,
           ProcessStartMode mode = ProcessStartMode.normal}) =>
+      customStart?.call() ??
       _nextProcess(Invocation.method(Symbol("start"), [command]));
 }
 
