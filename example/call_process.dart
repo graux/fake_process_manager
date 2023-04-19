@@ -8,7 +8,7 @@ main() {
   });
 }
 
-String runCmd(List cmd) {
+String runCmd(List<Object> cmd) {
   printTrace('executing: ${cmd.join(' ')}');
   final process = processManager.runSync(cmd);
   printTrace('executed: ${cmd.join(' ')} ==> ${process.stdout}');

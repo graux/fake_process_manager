@@ -9,7 +9,7 @@ import 'package:tool_base_test/tool_base_test.dart';
 import 'call_process.dart';
 
 main() {
-  FakeProcessManager fakeProcessManager;
+  late FakeProcessManager fakeProcessManager;
 
   setUp(() async {
     fakeProcessManager = FakeProcessManager();

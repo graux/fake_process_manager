@@ -10,7 +10,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('fake process manager', () {
-    FakeProcessManager processManager;
+    late FakeProcessManager processManager;
     final List<String> stdinCaptured = <String>[];
 
     void _captureStdin(String item) {
@@ -102,7 +102,7 @@ void main() {
   });
 
   group('additional fake process manager tests', () {
-    FakeProcessManager processManager;
+    late FakeProcessManager processManager;
 
     setUp(() async {
       processManager = FakeProcessManager();

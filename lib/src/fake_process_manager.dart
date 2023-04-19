@@ -18,15 +18,16 @@ import 'package:test/test.dart';
 ///
 /// Call [verifyCalls] to verify that each desired call occurred.
 class FakeProcessManager extends Mock implements ProcessManager {
-  FakeProcessManager({this.stdinResults, this.isPeriodic = false}) {
-    _setupMock();
+  FakeProcessManager(
+      {StringReceivedCallback? stdinResults, this.isPeriodic = false}) {
+    if (stdinResults != null) stdinResults = stdinResults;
   }
 
   final bool isPeriodic;
 
   /// The callback that will be called each time stdin input is supplied to
   /// a call.
-  final StringReceivedCallback stdinResults;
+  final StringReceivedCallback stdinResults = (a) => {};
 
   /// The list of calls in sequence and results that will be sent back.
   /// Each command line has a stdout output that will be returned.
@@ -38,7 +39,7 @@ class FakeProcessManager extends Mock implements ProcessManager {
   }
 
   /// Use for later verification.
-  List<Call> _origCalls;
+  List<Call> _origCalls = [];
 
   String _getCommand(List<String> params) => params.join(' ');
 
@@ -74,7 +75,7 @@ class FakeProcessManager extends Mock implements ProcessManager {
     expect(call.command, equals(key),
         reason:
             'Incorrect call in sequence. Add \'$key\' to calls before \'${call.command}\' at position ${_origCalls.length - calls.length}');
-    if (call.sideEffects != null) call.sideEffects();
+    if (call.sideEffects != null) call.sideEffects!.call();
     return call.result;
   }
 
@@ -99,47 +100,46 @@ class FakeProcessManager extends Mock implements ProcessManager {
         _popResult(invocation.positionalArguments[0]));
   }
 
-  void _setupMock() {
-    // Not all possible types of invocations are covered here, just the ones
-    // expected to be called.
-    // TODO(gspencer): make this more general so that any call will be captured.
-    when(start(
-      any,
-      environment: anyNamed('environment'),
-      workingDirectory: anyNamed('workingDirectory'),
-      runInShell: anyNamed('runInShell'),
-    )).thenAnswer(_nextProcess);
+  @override
+  bool canRun(executable, {String? workingDirectory}) => true;
 
-    when(start(any)).thenAnswer(_nextProcess);
+  @override
+  bool killPid(int pid, [ProcessSignal signal = ProcessSignal.sigterm]) => true;
 
-    when(run(
-      any,
-      environment: anyNamed('environment'),
-      workingDirectory: anyNamed('workingDirectory'),
-    )).thenAnswer(_nextResult);
+  @override
+  Future<ProcessResult> run(List<Object> command,
+          {String? workingDirectory,
+          Map<String, String>? environment,
+          bool includeParentEnvironment = true,
+          bool runInShell = false,
+          covariant Encoding? stdoutEncoding = systemEncoding,
+          covariant Encoding? stderrEncoding = systemEncoding}) =>
+      _nextResult(Invocation.method(Symbol("run"), [command]));
 
-    when(run(any)).thenAnswer(_nextResult);
+  @override
+  ProcessResult runSync(List<Object> command,
+          {String? workingDirectory,
+          Map<String, String>? environment,
+          bool includeParentEnvironment = true,
+          bool runInShell = false,
+          covariant Encoding? stdoutEncoding = systemEncoding,
+          covariant Encoding? stderrEncoding = systemEncoding}) =>
+      _nextResultSync(Invocation.method(Symbol("runSync"), [command]));
 
-    when(runSync(
-      any,
-      environment: anyNamed('environment'),
-      workingDirectory: anyNamed('workingDirectory'),
-      runInShell: anyNamed('runInShell'),
-    )).thenAnswer(_nextResultSync);
-
-    when(runSync(any)).thenAnswer(_nextResultSync);
-
-    when(killPid(any, any)).thenReturn(true);
-
-    when(canRun(any, workingDirectory: anyNamed('workingDirectory')))
-        .thenReturn(true);
-  }
+  @override
+  Future<Process> start(List<Object> command,
+          {String? workingDirectory,
+          Map<String, String>? environment,
+          bool includeParentEnvironment = true,
+          bool runInShell = false,
+          ProcessStartMode mode = ProcessStartMode.normal}) =>
+      _nextProcess(Invocation.method(Symbol("start"), [command]));
 }
 
 /// A fake process that can be used to interact with a process "started" by the FakeProcessManager.
 class FakeProcess extends Mock implements Process {
   FakeProcess(ProcessResult result,
-      {void stdinResults(String input), bool isPeriodic = false})
+      {required void stdinResults(String input), bool isPeriodic = false})
       : stderrStream = Stream<List<int>>.fromIterable(
             <List<int>>[result.stderr.codeUnits]),
         desiredExitCode = result.exitCode,
@@ -150,17 +150,12 @@ class FakeProcess extends Mock implements Process {
       stdoutStream =
           Stream<List<int>>.fromIterable(<List<int>>[result.stdout.codeUnits]);
     }
-    _setupMock();
   }
 
   final IOSink stdinSink;
-  Stream<List<int>> stdoutStream;
+  late final Stream<List<int>> stdoutStream;
   final Stream<List<int>> stderrStream;
   final int desiredExitCode;
-
-  void _setupMock() {
-    when(kill(any)).thenReturn(true);
-  }
 
   @override
   Future<int> get exitCode => Future<int>.value(desiredExitCode);
@@ -176,6 +171,9 @@ class FakeProcess extends Mock implements Process {
 
   @override
   Stream<List<int>> get stdout => stdoutStream;
+
+  @override
+  bool kill([ProcessSignal signal = ProcessSignal.sigterm]) => true;
 }
 
 /// Callback used to receive stdin input when it occurs.
@@ -221,9 +219,9 @@ class StringStreamConsumer implements StreamConsumer<List<int>> {
 class Call {
   final String command;
   final ProcessResult result;
-  final Function sideEffects;
+  final void Function()? sideEffects;
 
-  Call(this.command, ProcessResult result, {this.sideEffects})
+  Call(this.command, ProcessResult? result, {this.sideEffects})
       : this.result = result ?? ProcessResult(0, 0, '', '');
 
   @override
