@@ -8,7 +8,7 @@ environment:
   sdk: ">=2.18.6 <3.0.0"
 
 dependencies:
-  process: ^4.2.4
+  process: "5.0.2"
   tool_base:
     git: https://github.com/DrBu7cher/tool_base.git
     # path: /home/jbadstuebner/Dokumente/git/github.com/DrBu7cher/tool_base/main
