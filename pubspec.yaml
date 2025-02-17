@@ -10,8 +10,7 @@ environment:
 dependencies:
   process: ^5.0.3
   tool_base:
-    git: https://github.com/jonasbadstuebner/tool_base.git
-    # path: /home/jbadstuebner/Dokumente/git/github.com/jonasbadstuebner/tool_base/main
+    git: https://github.com/graux/tool_base.git
   mockito: ^5.4.0
   test: ">=1.22.0"
 
@@ -19,5 +18,4 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   tool_base_test:
-    git: https://github.com/jonasbadstuebner/tool_base_test.git
-    # path: /home/jbadstuebner/Dokumente/git/github.com/jonasbadstuebner/tool_base_test/main
+    git: https://github.com/graux/tool_base_test.git
